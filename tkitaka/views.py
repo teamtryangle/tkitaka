@@ -30,4 +30,14 @@ class TripInfoView(viewsets.ModelViewSet):
     serializer_class = TripInfoSerializer
 
 
-# class SignUp(viewsets.ModelViewSet):
+class RegisterView(viewsets.ModelViewSet):
+    queryset = Person.objects.all()
+    permission_classes = [permissions.IsAuthenticated, ]
+    # permission_classes = (IsAuthenticatedOrCreate,)
+    serializer_class = RegisterSerializer
+
+    def get_queryset(self):
+        return self.request.person.member.all().order_by("cDate")
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.person)

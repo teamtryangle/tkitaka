@@ -1,6 +1,8 @@
+from django.contrib.auth import authenticate
 from rest_framework import serializers
 from .models import *
 from django.contrib.auth.models import User
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -11,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
 class PersonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Person
-        fields = ('_personID',
+        fields = ( '_personID',
                   'pId',
                   'pPw',
                   'pName',
@@ -26,7 +28,7 @@ class PersonSerializer(serializers.ModelSerializer):
 class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
-        fields = ('_memberID',
+        fields = ( '_memberID',
                   'introduction',
                   'tmi',
                   'personID')
@@ -43,7 +45,7 @@ class AdministratorSerializer(serializers.ModelSerializer):
 class PBMSSerializer(serializers.ModelSerializer):
     class Meta:
         model = PBMS
-        fields = ('_PBMSID',
+        fields = ( '_PBMSID',
                   'accommondation',
                   'meal',
                   'sTransportation',
@@ -60,7 +62,7 @@ class PBMSSerializer(serializers.ModelSerializer):
 class TripInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = TripInfo
-        fields = ('_tripInfoID',
+        fields = ( '_tripInfoID',
                   'codeID',
                   'deDate',
                   'reDate',
@@ -72,11 +74,15 @@ class TripInfoSerializer(serializers.ModelSerializer):
         read_only_fields = ('cDate', 'uDate',)
 
 
-class SignUpSerializer(serializers.ModelSerializer):
-    person = PersonSerializer(required=True)
+# 회원가입
+class RegisterSerializer(serializers.ModelSerializer):
+    # person = PersonSerializer(required=True)   # 중복 표현은 None을 받지 않음
+    member = MemberSerializer(required=True)
+    administrator = AdministratorSerializer(required=True)
+
     class Meta:
         model = Person
-        fields = ('_personID',
+        fields = ( '_personID',
                   'pId',
                   'pPw',
                   'pName',
@@ -85,6 +91,53 @@ class SignUpSerializer(serializers.ModelSerializer):
                   'pPhone',
                   'pProfile',
                   'cDate')
+        read_only_fields = ('cDate',)
         extra_kwargs = {
-            'pPw': {'write_only':True}
+            'password': {'write_only': True},
         }
+
+    def create(self, validated_data):
+        # create Person
+        person = Person.objects.create(
+            pId = validated_data['pId'],
+            pPw = validated_data['pPw'],
+            pName = validated_data['pName'],
+            pBirth = validated_data['pBirth'],
+            pEmail = validated_data['pEmail'],
+            pPhone = validated_data['pPhone'],
+            pProfile = validated_data['pProfile'],
+        )
+        # return person
+
+        person_data = validated_data.pop('person')
+
+        # create Member
+        member = Member.objects.create(
+            person = person,
+            introduction = validated_data['introduction'],
+            tmi = validated_data['tmi'],
+            # personID = validated_data['personID'],
+        )
+
+        # create Administrator
+        administrator = Administrator.objects.create(
+            person=person,
+            codeID=validated_data['codeID'],
+            # personID = validated_data['personID'],
+        )
+
+        person.set_pPw(validated_data['pPw'])
+        person.save()
+        return person
+
+
+# 로그인
+class LoginSerializer(serializers.Serializer):
+    pId = serializers.CharField()
+    pPw = serializers.CharField()
+
+    def validate(self, data):
+        person = authenticate(**data)
+        if person and person.is_active:
+            return person
+        raise serializers.ValidationError("로그인 실패")

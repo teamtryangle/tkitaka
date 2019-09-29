@@ -12,6 +12,7 @@ class Person(models.Model):
     pProfile = models.ImageField(upload_to='member_profile/', null=True, blank=True, verbose_name='프로필 사진')
     cDate = models.DateField(null=False, auto_now=True, auto_created=True, verbose_name='가입날짜')
 
+    # 어드민 화면에 나타나는 방식
     def __str__(self):
         return self.pId
 
@@ -26,11 +27,20 @@ class Member(models.Model):
     def __int__(self):
         return self._memberID
 
+    # 멤버 별 사람번호(일대일)
+    def get_personID(self):
+        personID = Person.objects.filter(_personID=self.personID)
+
+
 # 관리자 테이블
 class Administrator(models.Model):
     _administratorID = models.AutoField(primary_key=True, verbose_name='관리자번호')    # 기본키
     codeID = models.CharField(max_length=2, null=False, verbose_name='관리자 분류')
     personID = models.OneToOneField('Person', on_delete=models.CASCADE, verbose_name='사람번호')  # '사람' 일대일
+
+    # 관리자 별 사람번호(일대일)
+    def get_personID(self):
+        personID = Person.objects.filter(_personID=self.personID)
 
     def __int__(self):
         return self._administratorID
@@ -51,6 +61,10 @@ class PBMS(models.Model):
     smoking = models.CharField(max_length=1, null=False, verbose_name='흡연')
     memberID = models.OneToOneField('Member', on_delete=models.CASCADE, max_length=1, null=False, verbose_name='회원번호')  # '회원' 일대일
 
+    # 멤버 별 PBMS(일대일)
+    def get_memberID(self):
+        memberID = Member.objects.filter(_memberID=self.memberID)
+
     def __int__(self):
         return self._PBMSID
 
@@ -67,6 +81,10 @@ class TripInfo(models.Model):
     cDate = models.DateTimeField(null=False, auto_now=True, auto_created=True, verbose_name='생성일시')
     uDate = models.DateTimeField(null=False, auto_now_add=True, auto_created=True, verbose_name='수정일시')
     memberID = models.ForeignKey('Member', on_delete=models.CASCADE, verbose_name='회원번호')   # '회원' 일대다
+
+    # 멤버 별 여행정보(일대다)
+    def get_memberID(self):
+        memberID = Member.objects.filter(_memberID=self.memberID)
 
     def __int__(self):
         return self._tripInfoID

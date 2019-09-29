@@ -1,3 +1,4 @@
+# from django.conf.urls.static import static
 from django.urls import path, include
 # from rest_framework.urlpatterns import format_suffix_patterns
 from .views import *
@@ -12,7 +13,7 @@ urlpatterns = [
     path('tripinfo/', TripInfoView),      # 관리자 리스트
 
     # path('login/', ),    # 로그인
-    # path('register/', ),   # 회원가입
+    # path('register/',),   # 회원가입
     # path('changePassword/', ),   # 비밀번호 변경
     # path('deletePerson/', ),   # 회원탈퇴
 ]
